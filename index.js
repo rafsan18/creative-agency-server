@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const fs = require("fs-extra");
 const fileUpload = require("express-fileupload");
 const MongoClient = require("mongodb").MongoClient;
 require("dotenv").config();
@@ -30,17 +31,45 @@ client.connect((err) => {
         .collection("services");
 
     app.post("/addAService", (req, res) => {
-        const image = req.files.image;
+        const file = req.files.file;
         const title = req.body.title;
         const description = req.body.description;
-        image.mv(`${__dirname}/serviceImage/${image.name}`, (err) => {
+        const filePath = `${__dirname}/serviceImage/${file.name}`;
+
+        file.mv(filePath, (err) => {
             if (err) {
                 console.log(err);
-                return res
-                    .status(500)
-                    .send({ msg: "Failed to upload image in the server." });
+                res.status(500).send({
+                    msg: "Failed to upload image in the server.",
+                });
             }
-            return res.send({ name: image.name, path: `/${image.name}` });
+            const newImg = fs.readFileSync(filePath);
+            const encImg = newImg.toString("base64");
+
+            var image = {
+                contentType: req.files.file.mimetype,
+                size: req.files.file.size,
+                img: Buffer(encImg, "base64"),
+            };
+            serviceCollection
+                .insertOne({ title, description, image })
+                .then((res) => {
+                    fs.remove(filePath, (error) => {
+                        if (error) {
+                            console.log(error);
+                            res.status(500).send({
+                                msg: "Failed to upload image in the server.",
+                            });
+                        }
+                        res.send(result.insertedCount > 0);
+                    });
+                });
+        });
+    });
+
+    app.get("/services", (req, res) => {
+        serviceCollection.find({}).toArray((err, documents) => {
+            res.send(documents);
         });
     });
 });
