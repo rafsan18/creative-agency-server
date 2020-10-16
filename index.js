@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs-extra");
 const fileUpload = require("express-fileupload");
+const ObjectId = require("mongodb").ObjectID;
 const MongoClient = require("mongodb").MongoClient;
 require("dotenv").config();
 
@@ -71,6 +72,14 @@ client.connect((err) => {
         serviceCollection.find({}).toArray((err, documents) => {
             res.send(documents);
         });
+    });
+
+    app.get("/service/:id", (req, res) => {
+        serviceCollection
+            .find({ _id: ObjectId(req.params.id) })
+            .toArray((err, documents) => {
+                res.send(documents);
+            });
     });
 });
 
