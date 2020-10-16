@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs-extra");
+const admin = require("firebase-admin");
 const fileUpload = require("express-fileupload");
 const ObjectId = require("mongodb").ObjectID;
 const MongoClient = require("mongodb").MongoClient;
@@ -18,6 +19,13 @@ app.use(fileUpload());
 
 const port = 5000;
 
+var serviceAccount = require("./config/creative-agency-42bae-firebase-adminsdk-h8pqc-6ee01bac54.json");
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://creative-agency-42bae.firebaseio.com",
+});
+
 app.get("/", (req, res) => {
     res.send("Hello World!");
 });
@@ -30,6 +38,9 @@ client.connect((err) => {
     const serviceCollection = client
         .db("creativeAgency")
         .collection("services");
+    const orderCollection = client
+        .db("creativeAgency")
+        .collection("clientOrder");
 
     app.post("/addAService", (req, res) => {
         const file = req.files.file;
@@ -78,8 +89,43 @@ client.connect((err) => {
         serviceCollection
             .find({ _id: ObjectId(req.params.id) })
             .toArray((err, documents) => {
-                res.send(documents);
+                res.send(documents[0]);
             });
+    });
+
+    app.post("/addOrder", (req, res) => {
+        const order = req.body;
+        orderCollection.insertOne(order).then((res) => {
+            res.send(result.insertedCount > 0);
+        });
+    });
+
+    app.get("/orderList", (req, res) => {
+        const bearer = req.headers.authorization;
+        if (bearer && bearer.startsWith("Bearer ")) {
+            const idToken = bearer.split(" ")[1];
+            admin
+                .auth()
+                .verifyIdToken(idToken)
+                .then(function (decodedToken) {
+                    let tokenEmail = decodedToken.email;
+                    const queryEmail = req.query.email;
+                    if (tokenEmail === queryEmail) {
+                        orderCollection
+                            .find({ email: queryEmail })
+                            .toArray((err, documents) => {
+                                res.send(documents);
+                            });
+                    } else {
+                        res.status(401).send("un-authorized access");
+                    }
+                })
+                .catch(function (error) {
+                    res.status(401).send("un-authorized access");
+                });
+        } else {
+            res.status(401).send("un-authorized access");
+        }
     });
 });
 
