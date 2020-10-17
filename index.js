@@ -41,6 +41,8 @@ client.connect((err) => {
     const orderCollection = client
         .db("creativeAgency")
         .collection("clientOrder");
+    const reviewCollection = client.db("creativeAgency").collection("reviews");
+    const adminCollection = client.db("creativeAgency").collection("adminList");
 
     app.post("/addAService", (req, res) => {
         const file = req.files.file;
@@ -126,6 +128,28 @@ client.connect((err) => {
         } else {
             res.status(401).send("un-authorized access");
         }
+    });
+
+    app.post("/addReview", (req, res) => {
+        const review = req.body;
+        reviewCollection.insertOne(review).then((res) => {
+            res.send(result.insertedCount > 0);
+        });
+    });
+
+    app.get("/reviews", (req, res) => {
+        reviewCollection.find({}).toArray((err, documents) => {
+            res.send(documents);
+        });
+    });
+
+    // Admin
+
+    app.post("/addAdmin", (req, res) => {
+        const admin = req.body;
+        adminCollection.insertOne(admin).then((res) => {
+            res.send(result.insertedCount > 0);
+        });
     });
 });
 
