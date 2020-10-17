@@ -151,6 +151,26 @@ client.connect((err) => {
             res.send(result.insertedCount > 0);
         });
     });
+
+    app.post("/fullOrderedList", (req, res) => {
+        const email = req.body.email;
+        adminCollection.find({ email: email }).toArray((err, documents) => {
+            if (documents.length === 1) {
+                orderCollection.find({}).toArray((err, documents) => {
+                    res.send(documents);
+                });
+            } else {
+                res.send("un-authorized access");
+            }
+        });
+    });
+
+    app.post("/isAdmin", (req, res) => {
+        const email = req.body.email;
+        adminCollection.find({ email: email }).toArray((err, documents) => {
+            res.send(documents.length > 0);
+        });
+    });
 });
 
 app.listen(process.env.PORT || port);
