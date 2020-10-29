@@ -44,3 +44,8 @@ Technologies Used:
     -   Express- fileUpload
     -   Firebase admin
     -   fs-extra
+
+Deployment Environment:
+
+-   Server-side in Heroku
+-   Client-side in Firebase
