@@ -29,7 +29,7 @@ Technologies Used:
     -   jwt-decodedToken
     -   React Bootstrap
     -   React router dom
-    -   React hook format
+    -   React hook form
     -   React-slick
     -   Slick carousel
     -   FontAwesome
